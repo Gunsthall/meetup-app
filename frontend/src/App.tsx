@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SessionProvider } from './contexts/SessionContext';
 import { Home } from './pages/Home';
 import { Driver } from './pages/Driver';
 import { Passenger } from './pages/Passenger';
 import { Active } from './pages/Active';
 import { Beacon } from './pages/Beacon';
+import { JoinWithCode } from './pages/JoinWithCode';
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
           <Route path="/passenger" element={<Passenger />} />
           <Route path="/session/:code/:role" element={<Active />} />
           <Route path="/session/:code/beacon" element={<Beacon />} />
-          <Route path="/:code" element={<Passenger />} />
+          <Route path="/:code" element={<JoinWithCode />} />
         </Routes>
       </BrowserRouter>
     </SessionProvider>

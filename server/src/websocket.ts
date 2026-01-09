@@ -51,6 +51,32 @@ export function setupWebSocket(server: Server) {
     // Update session connection status
     await sessionService.setConnected(code, role, true);
 
+    // Send initial session state to the newly connected client
+    const session = await sessionService.getSession(code);
+    if (session) {
+      let distance: number | null = null;
+      if (
+        session.driver.latitude !== null &&
+        session.driver.longitude !== null &&
+        session.passenger.latitude !== null &&
+        session.passenger.longitude !== null
+      ) {
+        distance = calculateDistance(
+          session.driver.latitude,
+          session.driver.longitude,
+          session.passenger.latitude,
+          session.passenger.longitude
+        );
+      }
+
+      // Send to the newly connected client
+      ws.send(JSON.stringify({
+        type: 'state',
+        session,
+        distance,
+      }));
+    }
+
     // Broadcast connection to other party
     broadcastToSession(code, {
       type: 'connection',

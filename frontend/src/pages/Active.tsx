@@ -17,6 +17,26 @@ export function Active() {
   const { vibrate } = useVibration();
 
   const role = urlRole as Role;
+  const [loading, setLoading] = useState(true);
+
+  // Fetch session data on mount if not available
+  useEffect(() => {
+    const fetchSession = async () => {
+      if (!session && code) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/v1/sessions/${code}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Fetched session info:', data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch session:', error);
+        }
+      }
+      setLoading(false);
+    };
+    fetchSession();
+  }, [code, session]);
 
   // Track location
   const location = useGeolocation();
@@ -84,6 +104,11 @@ export function Active() {
   };
 
   const handleBeacon = () => {
+    // Ensure session data is available before navigating
+    if (!session) {
+      console.error('No session data available');
+      return;
+    }
     navigate(`/session/${code}/beacon`);
   };
 
@@ -102,12 +127,15 @@ export function Active() {
     );
   }
 
-  if (location.loading) {
+  if (location.loading || (loading && !session)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Getting your location...</p>
+          <p className="mt-4 text-gray-600">
+            {location.loading ? 'Getting your location...' : 'Loading session...'}
+          </p>
+          <p className="mt-2 text-sm text-gray-500">Code: {code}</p>
         </div>
       </div>
     );
@@ -165,6 +193,15 @@ export function Active() {
           </div>
         )}
 
+        {/* Debug Info */}
+        <div className="bg-gray-100 rounded-lg p-4 text-xs">
+          <p className="font-bold mb-2">Debug Info:</p>
+          <p>Session loaded: {session ? '✅' : '❌'}</p>
+          <p>WebSocket: {isConnected ? '✅ Connected' : '❌ Disconnected'}</p>
+          <p>Role: {role}</p>
+          {session && <p>Driver: {session.driver.name}</p>}
+        </div>
+
         {/* Actions */}
         <div className="space-y-3">
           {role === 'driver' && (
@@ -173,8 +210,12 @@ export function Active() {
             </Button>
           )}
 
-          <Button fullWidth onClick={handleBeacon}>
-            Activate Beacon
+          <Button
+            fullWidth
+            onClick={handleBeacon}
+            disabled={!session}
+          >
+            Activate Beacon {!session && '(waiting...)'}
           </Button>
 
           <Button fullWidth variant="primary" onClick={handleMet}>

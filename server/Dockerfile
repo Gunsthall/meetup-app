@@ -14,7 +14,8 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Expose port
+# Cloud Run sets PORT env var, default to 8080 for Cloud Run
+# Port 3000 is used locally
 EXPOSE 3000
 
 # Start server

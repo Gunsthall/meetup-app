@@ -25,13 +25,17 @@ export function Driver() {
 
     try {
       const response = await api.createSession(name.trim());
+      console.log('Session created:', response);
+
       setRole('driver');
 
-      // Navigate to active session page with code
-      navigate(`/session/${response.code}/driver`);
+      // Small delay to ensure backend is ready
+      setTimeout(() => {
+        navigate(`/session/${response.code}/driver`);
+      }, 100);
     } catch (err) {
+      console.error('Failed to create session:', err);
       setError('Failed to create session. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
