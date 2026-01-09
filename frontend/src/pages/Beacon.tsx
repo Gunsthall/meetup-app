@@ -57,6 +57,37 @@ export function Beacon() {
     navigate(-1);
   };
 
+  // Fullscreen on landscape orientation
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      if (window.screen.orientation) {
+        const isLandscape = window.screen.orientation.type.includes('landscape');
+
+        if (isLandscape && !document.fullscreenElement) {
+          // Enter fullscreen in landscape
+          document.documentElement.requestFullscreen?.().catch(err => {
+            console.log('Fullscreen request failed:', err);
+          });
+        } else if (!isLandscape && document.fullscreenElement) {
+          // Exit fullscreen in portrait
+          document.exitFullscreen?.().catch(err => {
+            console.log('Exit fullscreen failed:', err);
+          });
+        }
+      }
+    };
+
+    // Listen for orientation changes
+    window.screen.orientation?.addEventListener('change', handleOrientationChange);
+
+    // Check initial orientation
+    handleOrientationChange();
+
+    return () => {
+      window.screen.orientation?.removeEventListener('change', handleOrientationChange);
+    };
+  }, []);
+
   // Debug logging
   useEffect(() => {
     console.log('Beacon - Session:', session);

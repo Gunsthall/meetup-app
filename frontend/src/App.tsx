@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SessionProvider } from './contexts/SessionContext';
 import { Home } from './pages/Home';
 import { Driver } from './pages/Driver';

@@ -1,4 +1,5 @@
 import { redis } from './redisService.js';
+import { analyticsService } from './analyticsService.js';
 import { generateCode } from '../utils/codeGenerator.js';
 import { colorFromCode, patternFromCode } from '../utils/visualGenerator.js';
 import type { Session, Role } from '../types/index.js';
@@ -38,6 +39,10 @@ export const sessionService = {
     };
 
     await redis.setEx(`session:${code}`, SESSION_TTL, JSON.stringify(session));
+
+    // Log session creation for analytics
+    await analyticsService.logSessionCreated(code, driverName);
+
     return session;
   },
 
@@ -67,6 +72,8 @@ export const sessionService = {
     // Activate session when passenger connects
     if (session.status === 'waiting' && role === 'passenger') {
       session.status = 'active';
+      // Log session join for analytics
+      await analyticsService.logSessionJoined(code);
     }
 
     await redis.setEx(`session:${code}`, SESSION_TTL, JSON.stringify(session));
@@ -95,6 +102,10 @@ export const sessionService = {
     if (!session) return;
 
     session.status = 'met';
+
+    // Log session completion for analytics
+    await analyticsService.logSessionCompleted(code);
+
     // Keep for 5 more minutes for final confirmations
     await redis.setEx(`session:${code}`, 300, JSON.stringify(session));
   },

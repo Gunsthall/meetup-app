@@ -7,7 +7,7 @@ import { initRedis, closeRedis } from './services/redisService.js';
 // Load environment variables
 config();
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function start() {
   try {
@@ -24,8 +24,8 @@ async function start() {
     setupWebSocket(server);
     console.log('WebSocket server ready');
 
-    // Start server
-    server.listen(PORT, () => {
+    // Start server (listen on 0.0.0.0 for Cloud Run)
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`HTTP: http://localhost:${PORT}`);
       console.log(`WebSocket: ws://localhost:${PORT}/ws`);

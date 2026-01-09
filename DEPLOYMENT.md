@@ -1,14 +1,216 @@
-# MeetUp App - Production Deployment Guide
+# MeetUp App - Production Deployment
 
-This guide covers deploying the MeetUp app to production with HTTPS support for mobile geolocation.
+## ✅ LIVE IN PRODUCTION
 
-## Prerequisites
+**Deployed:** January 9, 2026
+**Region:** europe-west3 (Frankfurt, Germany)
+**Status:** Ready for MVP Testing
 
-- Google Cloud Platform account (you already have this!)
-- gcloud CLI installed
-- Domain name (optional, but recommended)
+## Live URLs
 
-## Option 1: Google Cloud Run (Recommended for MVP)
+### 🌐 Frontend (PWA)
+```
+https://meetup-frontend-1012349016840.europe-west3.run.app
+```
+Open this URL on your phone to use the app!
+
+### 🔌 Backend API
+```
+https://meetup-backend-1012349016840.europe-west3.run.app
+```
+
+### 📊 Analytics Dashboard
+```
+https://meetup-backend-1012349016840.europe-west3.run.app/v1/analytics/dashboard
+```
+Monitor usage, sessions, and detect viral spread.
+
+---
+
+## Infrastructure Details
+
+### Google Cloud Project
+- **Project ID:** `meetup-app-001`
+- **Region:** `europe-west3` (Frankfurt)
+- **Services:** Cloud Run, Redis (Memorystore), VPC Access
+
+### Redis Instance
+- **Name:** `meetup-redis`
+- **IP:** `10.189.125.115:6379`
+- **Tier:** Basic (1GB)
+- **Region:** europe-west3
+
+### VPC Connector
+- **Name:** `meetup-connector`
+- **Network:** default
+- **IP Range:** 10.8.0.0/28
+
+### Cloud Run Services
+
+**Backend:**
+- Service: `meetup-backend`
+- Revision: `meetup-backend-00003-c8j`
+- Environment:
+  - `REDIS_URL=redis://10.189.125.115:6379`
+  - `CORS_ORIGIN=https://meetup-frontend-1012349016840.europe-west3.run.app`
+  - `FRONTEND_URL=https://meetup-frontend-1012349016840.europe-west3.run.app`
+
+**Frontend:**
+- Service: `meetup-frontend`
+- Revision: `meetup-frontend-00002-sq8`
+- Build Variables:
+  - `VITE_API_URL=https://meetup-backend-1012349016840.europe-west3.run.app`
+  - `VITE_WS_URL=wss://meetup-backend-1012349016840.europe-west3.run.app`
+
+---
+
+## Testing the Deployment
+
+### 1. Quick Health Check
+```bash
+curl https://meetup-backend-1012349016840.europe-west3.run.app/v1/health
+```
+
+### 2. Open the App
+Visit on your phone:
+```
+https://meetup-frontend-1012349016840.europe-west3.run.app
+```
+
+### 3. Test Full Flow
+1. **Driver:** Create a session
+2. **Driver:** Share the link (e.g., `https://meetup-frontend.../ABC123`)
+3. **Passenger:** Click the link on their phone
+4. **Both:** Grant location permissions
+5. **Both:** Watch real-time distance updates
+6. **Both:** Click "We Met!" when you meet
+
+### 4. Monitor Analytics
+```bash
+curl https://meetup-backend-1012349016840.europe-west3.run.app/v1/analytics/stats
+```
+
+---
+
+## Deployment Commands
+
+### Redeploy Backend
+```bash
+cd server
+gcloud run deploy meetup-backend \
+  --source . \
+  --platform managed \
+  --region europe-west3 \
+  --allow-unauthenticated \
+  --vpc-connector meetup-connector \
+  --set-env-vars REDIS_URL=redis://10.189.125.115:6379 \
+  --set-env-vars CORS_ORIGIN=https://meetup-frontend-1012349016840.europe-west3.run.app \
+  --set-env-vars FRONTEND_URL=https://meetup-frontend-1012349016840.europe-west3.run.app \
+  --quiet
+```
+
+### Redeploy Frontend
+```bash
+cd frontend
+gcloud run deploy meetup-frontend \
+  --source . \
+  --platform managed \
+  --region europe-west3 \
+  --allow-unauthenticated \
+  --quiet
+```
+
+**Note:** Frontend uses `.env.production` file for build-time environment variables.
+
+### View Logs
+```bash
+# Backend logs
+gcloud run services logs read meetup-backend --region europe-west3 --limit 50
+
+# Frontend logs
+gcloud run services logs read meetup-frontend --region europe-west3 --limit 50
+
+# Follow logs in real-time
+gcloud run services logs tail meetup-backend --region europe-west3
+```
+
+---
+
+## Analytics & Monitoring
+
+See [ANALYTICS.md](./ANALYTICS.md) for complete analytics guide.
+
+### Quick Stats
+```bash
+# Overall statistics
+curl https://meetup-backend-1012349016840.europe-west3.run.app/v1/analytics/stats | json_pp
+
+# Check for unusual activity
+curl https://meetup-backend-1012349016840.europe-west3.run.app/v1/analytics/anomalies
+
+# Recent events
+curl "https://meetup-backend-1012349016840.europe-west3.run.app/v1/analytics/events?limit=50"
+```
+
+### Windows PowerShell
+```powershell
+Invoke-RestMethod https://meetup-backend-1012349016840.europe-west3.run.app/v1/analytics/stats | ConvertTo-Json
+```
+
+---
+
+## Cost Estimates
+
+### Current (MVP Testing)
+- Cloud Run Backend: ~$5-10/month
+- Cloud Run Frontend: ~$5/month
+- Redis Basic (1GB): ~$30/month
+- VPC Connector: ~$10/month
+- **Total: ~$50-55/month**
+
+### After Growth (100+ sessions/day)
+- Cloud Run Backend: ~$20-50/month
+- Cloud Run Frontend: ~$10/month
+- Redis Standard: ~$70/month
+- **Total: ~$100-130/month**
+
+---
+
+## Troubleshooting
+
+### Frontend Not Loading
+```bash
+# Check service status
+gcloud run services describe meetup-frontend --region europe-west3
+
+# Check logs
+gcloud run services logs read meetup-frontend --region europe-west3 --limit 20
+```
+
+### Backend Connection Issues
+```bash
+# Test health
+curl https://meetup-backend-1012349016840.europe-west3.run.app/v1/health
+
+# Check logs
+gcloud run services logs read meetup-backend --region europe-west3 --limit 20
+```
+
+### WebSocket Not Connecting
+- Verify URL uses `wss://` (not `ws://`)
+- Check browser console for errors
+- Verify CORS settings
+
+### Location Not Working
+- Must use HTTPS (✅ already enabled)
+- Grant browser location permissions
+- Test on Chrome/Safari mobile
+
+---
+
+## Original Deployment Guide
+
+## Option 1: Google Cloud Run (Currently Deployed)
 
 **Best for:** Quick deployment, automatic scaling, low cost for MVP
 

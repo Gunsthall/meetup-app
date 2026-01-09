@@ -1,4 +1,4 @@
-const CACHE_NAME = 'meetup-v1';
+const CACHE_NAME = 'meetup-v5-jan2026';
 const urlsToCache = [
   '/',
   '/index.html',

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import sessionsRouter from './routes/sessions.js';
 import healthRouter from './routes/health.js';
+import analyticsRouter from './routes/analytics.js';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/v1/health', healthRouter);
 app.use('/v1/sessions', sessionsRouter);
+app.use('/v1/analytics', analyticsRouter);
 
 // 404 handler
 app.use((req, res) => {

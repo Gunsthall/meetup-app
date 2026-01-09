@@ -6,7 +6,8 @@
       "Bash(npm install:*)",
       "Bash(ipconfig:*)",
       "Bash(findstr:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

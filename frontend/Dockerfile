@@ -9,18 +9,10 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source code (includes .env.production)
 COPY . .
 
-# Build arguments for environment variables
-ARG VITE_API_URL
-ARG VITE_WS_URL
-
-# Create .env file for build
-RUN echo "VITE_API_URL=${VITE_API_URL}" > .env && \
-    echo "VITE_WS_URL=${VITE_WS_URL}" >> .env
-
-# Build the app
+# Build the app (Vite uses .env.production for production builds)
 RUN npm run build
 
 # Production stage - serve with nginx
