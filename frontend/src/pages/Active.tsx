@@ -17,24 +17,22 @@ export function Active() {
   const role = urlRole as Role;
   const [loading, setLoading] = useState(true);
 
-  // Fetch session data on mount if not available
+  // Mark loading as false once WebSocket connects and we get session data
   useEffect(() => {
-    const fetchSession = async () => {
-      if (!session && code) {
-        try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL}/v1/sessions/${code}`);
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Fetched session info:', data);
-          }
-        } catch (error) {
-          console.error('Failed to fetch session:', error);
-        }
-      }
+    if (session) {
+      console.log('Session data received from WebSocket:', session);
       setLoading(false);
-    };
-    fetchSession();
-  }, [code, session]);
+    }
+  }, [session]);
+
+  // Set a timeout to stop loading even if WebSocket is slow
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('Loading timeout - stopping loading state');
+      setLoading(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Track location
   const location = useGeolocation();
@@ -52,10 +50,17 @@ export function Active() {
   );
 
   function handleWSMessage(message: WSResponse) {
+    console.log('[Active] WS Message received:', message);
+
     if (message.type === 'state' && message.session) {
+      console.log('[Active] Setting session:', message.session);
       setSession(message.session);
+
       if (message.distance !== undefined) {
+        console.log('[Active] Setting distance:', message.distance);
         setDistance(message.distance);
+      } else {
+        console.log('[Active] No distance in message');
       }
     }
 
@@ -75,6 +80,18 @@ export function Active() {
       });
     }
   }, [location.latitude, location.longitude, isConnected, sendMessage]);
+
+  // Auto-activate beacon for passengers
+  useEffect(() => {
+    if (role === 'passenger' && session && !loading) {
+      // Small delay to ensure everything is loaded
+      console.log('Auto-activating beacon for passenger');
+      const timer = setTimeout(() => {
+        navigate(`/session/${code}/beacon`);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [role, session, loading, navigate, code]);
 
   // Vibrate when close
   useEffect(() => {
@@ -247,13 +264,13 @@ export function Active() {
         </div>
 
         {/* Actions */}
-        <div className="space-y-3 pt-4">
+        <div className="space-y-4 pt-4">
           {role === 'driver' && (
             <button
               onClick={handleShare}
-              className="w-full bg-white text-indigo-600 font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300 transition-all duration-300 flex items-center justify-center space-x-2"
+              className="w-full min-h-[70px] bg-white text-indigo-600 font-semibold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl border-2 border-indigo-200 hover:border-indigo-300 transition-all duration-300 flex items-center justify-center space-x-3 text-xl"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               <span>Share Link</span>
@@ -263,9 +280,9 @@ export function Active() {
           <button
             onClick={handleBeacon}
             disabled={!session}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full min-h-[70px] bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed text-xl"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
             <span>Activate Beacon</span>
@@ -273,9 +290,9 @@ export function Active() {
 
           <button
             onClick={handleMet}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center space-x-2"
+            className="w-full min-h-[70px] bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center space-x-3 text-xl"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <span>We Met!</span>
@@ -283,7 +300,7 @@ export function Active() {
 
           <button
             onClick={() => navigate('/')}
-            className="w-full bg-white text-gray-700 font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl border border-gray-200 hover:border-gray-300 transition-all duration-300"
+            className="w-full min-h-[70px] bg-white text-gray-700 font-semibold py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl border border-gray-200 hover:border-gray-300 transition-all duration-300 text-xl"
           >
             Cancel Session
           </button>
