@@ -63,18 +63,18 @@ export function Driver() {
           </div>
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">
               Create Pickup Session
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-base">
               Enter the passenger's name to get started
             </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start space-x-3">
+            <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start space-x-3">
               <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -93,8 +93,8 @@ export function Driver() {
           )}
 
           {/* Input */}
-          <div className="mb-6">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-8">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-3">
               Passenger's Name
             </label>
             <input
@@ -105,7 +105,7 @@ export function Driver() {
               onKeyPress={(e) => e.key === 'Enter' && handleCreateSession()}
               disabled={loading}
               placeholder="e.g., John"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 placeholder-gray-400"
+              className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 placeholder-gray-400 text-lg"
             />
           </div>
 
@@ -113,11 +113,11 @@ export function Driver() {
           <button
             onClick={handleCreateSession}
             disabled={loading || !name.trim()}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full min-h-[70px] bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] text-xl"
           >
             {loading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <div className="flex items-center justify-center space-x-3">
+                <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -129,14 +129,14 @@ export function Driver() {
           </button>
 
           {/* Info Box */}
-          <div className="mt-6 p-4 bg-indigo-50 rounded-xl">
+          <div className="mt-8 p-5 bg-indigo-50 rounded-xl">
             <div className="flex items-start space-x-3">
               <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="flex-1">
-                <p className="text-sm text-indigo-900 font-medium">What happens next?</p>
-                <p className="text-xs text-indigo-700 mt-1">
+                <p className="text-sm text-indigo-900 font-medium mb-1">What happens next?</p>
+                <p className="text-sm text-indigo-700">
                   You'll get a shareable link to send to your passenger. They'll be able to track your location in real-time.
                 </p>
               </div>
