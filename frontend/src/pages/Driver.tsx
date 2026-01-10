@@ -68,7 +68,7 @@ export function Driver() {
               Create Pickup Session
             </h1>
             <p className="text-gray-600">
-              Enter your name to get started
+              Enter the passenger's name to get started
             </p>
           </div>
 
@@ -95,7 +95,7 @@ export function Driver() {
           {/* Input */}
           <div className="mb-6">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Your Name
+              Passenger's Name
             </label>
             <input
               id="name"

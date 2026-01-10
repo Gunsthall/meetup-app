@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSession } from '../contexts/SessionContext';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useGeolocation } from '../hooks/useGeolocation';
 import { blinkIntervalFromDistance } from '../utils/blinkSpeed';
 import type { WSResponse, Role } from '../types';
 
@@ -15,17 +16,22 @@ export function Beacon() {
   // Keep screen awake
   useWakeLock(true);
 
+  // Track location
+  const location = useGeolocation();
+
   // WebSocket connection to receive session data
-  const { isConnected } = useWebSocket({
+  const { isConnected, sendMessage } = useWebSocket({
     sessionCode: code!,
     role: (role || 'passenger') as Role,
     onMessage: handleWSMessage,
   });
 
   function handleWSMessage(message: WSResponse) {
+    console.log('[Beacon] WS Message:', message);
     if (message.type === 'state' && message.session) {
       setSession(message.session);
       if (message.distance !== undefined) {
+        console.log('[Beacon] Distance updated:', message.distance);
         setDistance(message.distance);
       }
     }
@@ -34,6 +40,26 @@ export function Beacon() {
       navigate('/');
     }
   }
+
+  // Send location updates
+  useEffect(() => {
+    if (location.latitude && location.longitude && isConnected) {
+      console.log('[Beacon] Sending location:', location.latitude, location.longitude);
+      sendMessage({
+        type: 'location',
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy || 0,
+      });
+    } else {
+      console.log('[Beacon] Location not ready:', {
+        lat: location.latitude,
+        lng: location.longitude,
+        connected: isConnected,
+        error: location.error
+      });
+    }
+  }, [location.latitude, location.longitude, isConnected, sendMessage, location.error]);
 
   // Blink effect based on distance
   useEffect(() => {
@@ -110,26 +136,27 @@ export function Beacon() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center transition-colors duration-200"
+      className="min-h-screen w-full flex flex-col items-center justify-center transition-colors duration-200 overflow-hidden"
       style={{ backgroundColor }}
       onClick={handleBack}
     >
-      <div className="text-center p-8">
+      <div className="text-center px-4 py-2 max-w-full">
         <h1
-          className="font-bold mb-4"
+          className="font-bold mb-2"
           style={{
-            fontSize: 'clamp(4rem, 20vw, 16rem)',
+            fontSize: 'clamp(2.5rem, 12vw, 10rem)',
             color: textColor,
             textShadow,
-            WebkitTextStroke: isBlinking ? '3px rgba(0,0,0,0.3)' : '3px rgba(255,255,255,0.3)'
+            WebkitTextStroke: isBlinking ? '2px rgba(0,0,0,0.3)' : '2px rgba(255,255,255,0.3)',
+            lineHeight: '1.1'
           }}
         >
           {driverName.toUpperCase()}
         </h1>
         <p
-          className="font-mono font-bold mb-4"
+          className="font-mono font-bold mb-1"
           style={{
-            fontSize: 'clamp(1.5rem, 8vw, 5rem)',
+            fontSize: 'clamp(1.2rem, 6vw, 3.5rem)',
             color: textColor,
             textShadow,
             letterSpacing: '0.1em'
@@ -139,9 +166,9 @@ export function Beacon() {
         </p>
         {distance !== null && (
           <p
-            className="mt-8 font-bold"
+            className="mt-2 font-bold"
             style={{
-              fontSize: 'clamp(1.25rem, 5vw, 2.5rem)',
+              fontSize: 'clamp(1rem, 4vw, 2rem)',
               color: textColor,
               textShadow
             }}
@@ -150,8 +177,8 @@ export function Beacon() {
           </p>
         )}
         <p
-          className="mt-12 text-sm opacity-75"
-          style={{ color: textColor }}
+          className="mt-4 text-xs opacity-75"
+          style={{ color: textColor, fontSize: 'clamp(0.7rem, 2vw, 0.9rem)' }}
         >
           Tap anywhere to exit
         </p>
