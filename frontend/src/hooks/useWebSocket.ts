@@ -25,51 +25,65 @@ export function useWebSocket({ sessionCode, role, onMessage }: UseWebSocketOptio
   }, []);
 
   useEffect(() => {
-    // Create WebSocket connection
-    const url = `${WS_URL}/ws?code=${sessionCode}&role=${role}`;
-    const socket = new WebSocket(url);
+    let reconnectTimeout: NodeJS.Timeout;
+    let isMounted = true;
 
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-      setIsConnected(true);
-      setError(null);
+    const connect = () => {
+      // Create WebSocket connection
+      const url = `${WS_URL}/ws?code=${sessionCode}&role=${role}`;
+      console.log('[WebSocket] Connecting to:', url);
+      const socket = new WebSocket(url);
+
+      socket.onopen = () => {
+        console.log('[WebSocket] Connected');
+        setIsConnected(true);
+        setError(null);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const message: WSResponse = JSON.parse(event.data);
+          onMessage?.(message);
+        } catch (err) {
+          console.error('[WebSocket] Failed to parse message:', err);
+        }
+      };
+
+      socket.onerror = (event) => {
+        console.error('[WebSocket] Error:', event);
+        setError('Connection error');
+      };
+
+      socket.onclose = (event) => {
+        console.log('[WebSocket] Closed:', event.code, event.reason);
+        setIsConnected(false);
+
+        // Attempt reconnection after 3 seconds if unexpected close and still mounted
+        if (isMounted && event.code !== 1000 && event.code !== 4000) {
+          console.log('[WebSocket] Reconnecting in 3 seconds...');
+          reconnectTimeout = setTimeout(() => {
+            if (isMounted) {
+              console.log('[WebSocket] Attempting reconnection...');
+              connect();
+            }
+          }, 3000);
+        }
+      };
+
+      ws.current = socket;
     };
 
-    socket.onmessage = (event) => {
-      try {
-        const message: WSResponse = JSON.parse(event.data);
-        onMessage?.(message);
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
-      }
-    };
-
-    socket.onerror = (event) => {
-      console.error('WebSocket error:', event);
-      setError('Connection error');
-    };
-
-    socket.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason);
-      setIsConnected(false);
-
-      // Attempt reconnection after 3 seconds if unexpected close
-      if (event.code !== 1000 && event.code !== 4000) {
-        setTimeout(() => {
-          console.log('Attempting to reconnect...');
-        }, 3000);
-      }
-    };
-
-    ws.current = socket;
+    connect();
 
     // Cleanup on unmount
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.close(1000, 'Component unmounted');
+      isMounted = false;
+      clearTimeout(reconnectTimeout);
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.close(1000, 'Component unmounted');
       }
     };
-  }, [sessionCode, role, onMessage]);
+  }, [sessionCode, role]);
 
   return {
     isConnected,

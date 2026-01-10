@@ -28,8 +28,14 @@ export function useGeolocation(enabled: boolean = true) {
       return;
     }
 
-    const watchId = navigator.geolocation.watchPosition(
+    // Request permission explicitly first
+    let watchId: number;
+    console.log('[Geolocation] Requesting location permission...');
+
+    // First get current position to trigger permission prompt
+    navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log('[Geolocation] Permission granted, starting watch');
         setState({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -37,8 +43,32 @@ export function useGeolocation(enabled: boolean = true) {
           error: null,
           loading: false,
         });
+
+        // Now start watching for updates
+        watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            console.log('[Geolocation] Position update:', position.coords.latitude, position.coords.longitude);
+            setState({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              error: null,
+              loading: false,
+            });
+          },
+          (error) => {
+            console.error('[Geolocation] Watch error:', error.message);
+            setState((s) => ({ ...s, error: error.message, loading: false }));
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
       },
       (error) => {
+        console.error('[Geolocation] Permission denied or error:', error.message);
         setState((s) => ({ ...s, error: error.message, loading: false }));
       },
       {
@@ -48,7 +78,11 @@ export function useGeolocation(enabled: boolean = true) {
       }
     );
 
-    return () => navigator.geolocation.clearWatch(watchId);
+    return () => {
+      if (watchId !== undefined) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, [enabled]);
 
   return state;
