@@ -25,7 +25,7 @@ export function useWebSocket({ sessionCode, role, onMessage }: UseWebSocketOptio
   }, []);
 
   useEffect(() => {
-    let reconnectTimeout: NodeJS.Timeout;
+    let reconnectTimeout: number;
     let isMounted = true;
 
     const connect = () => {
