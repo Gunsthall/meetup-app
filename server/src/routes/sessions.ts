@@ -1,14 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { sessionService } from '../services/sessionService.js';
 import { isValidCode } from '../utils/codeGenerator.js';
+import { requireApiKey } from '../middleware/apiKeyAuth.js';
 
 const router = Router();
 
 /**
  * POST /sessions
- * Create new session (driver initiates)
+ * Create new session (driver initiates) - REQUIRES AUTH
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireApiKey(), async (req: Request, res: Response) => {
   try {
     const { driverName, bookingRef } = req.body;
 

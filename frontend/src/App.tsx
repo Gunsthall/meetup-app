@@ -24,16 +24,17 @@ function App() {
     <SessionProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public route - Login */}
+          {/* Public routes - No authentication required */}
           <Route path="/login" element={<Login />} />
+          <Route path="/:code" element={<JoinWithCode />} />
+          <Route path="/session/:code/beacon" element={<Beacon />} />
 
-          {/* Protected routes - require authentication */}
+          {/* Protected routes - Require authentication (driver only) */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/driver" element={<ProtectedRoute><Driver /></ProtectedRoute>} />
-          <Route path="/passenger" element={<ProtectedRoute><Passenger /></ProtectedRoute>} />
-          <Route path="/session/:code/:role" element={<ProtectedRoute><Active /></ProtectedRoute>} />
-          <Route path="/session/:code/beacon" element={<ProtectedRoute><Beacon /></ProtectedRoute>} />
-          <Route path="/:code" element={<ProtectedRoute><JoinWithCode /></ProtectedRoute>} />
+
+          {/* Session routes - Public for passengers, protected for drivers */}
+          <Route path="/session/:code/:role" element={<Active />} />
         </Routes>
       </BrowserRouter>
     </SessionProvider>

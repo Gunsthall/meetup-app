@@ -27,24 +27,28 @@ export function setupWebSocket(server: Server) {
     const role = url.searchParams.get('role') as Role | null;
     const apiKey = url.searchParams.get('apiKey');
 
-    // Validate API key
-    if (!apiKey) {
-      ws.close(4001, 'Unauthorized: Missing API key');
-      return;
-    }
-
-    const keyMetadata = await validateApiKey(apiKey);
-    if (!keyMetadata) {
-      ws.close(4001, 'Unauthorized: Invalid or expired API key');
-      return;
-    }
-
-    console.log(`[WebSocket] Connection attempt from: ${keyMetadata.name} (${keyMetadata.type})`);
-
-    // Validate connection params
+    // Validate connection params first
     if (!code || !role || (role !== 'driver' && role !== 'passenger')) {
       ws.close(4000, 'Missing or invalid code/role parameters');
       return;
+    }
+
+    // Validate API key ONLY for drivers (passengers don't need auth)
+    if (role === 'driver') {
+      if (!apiKey) {
+        ws.close(4001, 'Unauthorized: Missing API key (required for drivers)');
+        return;
+      }
+
+      const keyMetadata = await validateApiKey(apiKey);
+      if (!keyMetadata) {
+        ws.close(4001, 'Unauthorized: Invalid or expired API key');
+        return;
+      }
+
+      console.log(`[WebSocket] Driver connection from: ${keyMetadata.name} (${keyMetadata.type})`);
+    } else {
+      console.log(`[WebSocket] Passenger connection (no auth required)`);
     }
 
     // Check if session exists

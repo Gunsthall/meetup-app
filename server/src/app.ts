@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/v1/health', healthRouter); // Public - no auth required
-app.use('/v1/sessions', requireApiKey(), sessionsRouter); // Requires API key
+app.use('/v1/sessions', sessionsRouter); // Mixed - some endpoints require auth, some don't
 app.use('/v1/analytics', requireApiKey(['admin']), analyticsRouter); // Admin only
 
 // 404 handler

@@ -30,17 +30,25 @@ export function useWebSocket({ sessionCode, role, onMessage }: UseWebSocketOptio
     let isMounted = true;
 
     const connect = () => {
-      // Get API key from session storage
+      // Get API key from session storage (optional for passengers)
       const apiKey = getApiKey();
-      if (!apiKey) {
-        console.error('[WebSocket] No API key found');
-        setError('Authentication required');
+
+      // For drivers, API key is required
+      if (role === 'driver' && !apiKey) {
+        console.error('[WebSocket] No API key found (required for drivers)');
+        setError('Authentication required for drivers');
         return;
       }
 
-      // Create WebSocket connection with API key
-      const url = `${WS_URL}/ws?code=${sessionCode}&role=${role}&apiKey=${encodeURIComponent(apiKey)}`;
-      console.log('[WebSocket] Connecting to:', `${WS_URL}/ws?code=${sessionCode}&role=${role}&apiKey=***`);
+      // Create WebSocket connection with API key (if available)
+      let url = `${WS_URL}/ws?code=${sessionCode}&role=${role}`;
+      if (apiKey) {
+        url += `&apiKey=${encodeURIComponent(apiKey)}`;
+        console.log('[WebSocket] Connecting to:', `${WS_URL}/ws?code=${sessionCode}&role=${role}&apiKey=***`);
+      } else {
+        console.log('[WebSocket] Connecting to:', `${WS_URL}/ws?code=${sessionCode}&role=${role} (no auth)`);
+      }
+
       const socket = new WebSocket(url);
 
       socket.onopen = () => {
