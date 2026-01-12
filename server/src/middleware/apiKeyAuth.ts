@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { validateApiKey } from '../services/apiKeyService';
-import type { ApiKeyType } from '../types/auth';
+import { validateApiKey } from '../services/apiKeyService.js';
+import type { ApiKeyType } from '../types/auth.js';
 
 /**
  * Middleware to require API key authentication

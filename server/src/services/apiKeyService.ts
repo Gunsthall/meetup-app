@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { redisService } from './redisService';
-import type { ApiKeyMetadata, ApiKeyType } from '../types/auth';
+import { redis } from './redisService.js';
+import type { ApiKeyMetadata, ApiKeyType } from '../types/auth.js';
 
 // Environment-based keys (never expire)
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -55,11 +55,13 @@ export async function validateApiKey(apiKey: string): Promise<ApiKeyMetadata | n
   const redisKey = `apikey:${hashedKey}`;
 
   try {
-    const metadata = await redisService.get<ApiKeyMetadata>(redisKey);
+    const metadataStr = await redis.get(redisKey);
 
-    if (!metadata) {
+    if (!metadataStr) {
       return null;
     }
+
+    const metadata: ApiKeyMetadata = JSON.parse(metadataStr);
 
     // Check if key is enabled
     if (!metadata.enabled) {
@@ -73,7 +75,7 @@ export async function validateApiKey(apiKey: string): Promise<ApiKeyMetadata | n
 
     // Update last used timestamp
     metadata.lastUsed = Date.now();
-    await redisService.set(redisKey, metadata);
+    await redis.set(redisKey, JSON.stringify(metadata));
 
     return metadata;
   } catch (error) {
@@ -97,13 +99,13 @@ export async function storeApiKey(
     lastUsed: Date.now(),
   };
 
-  await redisService.set(redisKey, fullMetadata);
+  await redis.set(redisKey, JSON.stringify(fullMetadata));
 
   // Set expiration if specified
   if (metadata.expiresAt) {
     const ttl = Math.floor((metadata.expiresAt - Date.now()) / 1000);
     if (ttl > 0) {
-      await redisService.client.expire(redisKey, ttl);
+      await redis.expire(redisKey, ttl);
     }
   }
 }
@@ -115,13 +117,14 @@ export async function revokeApiKey(apiKey: string): Promise<boolean> {
   const hashedKey = hashApiKey(apiKey);
   const redisKey = `apikey:${hashedKey}`;
 
-  const metadata = await redisService.get<ApiKeyMetadata>(redisKey);
-  if (!metadata) {
+  const metadataStr = await redis.get(redisKey);
+  if (!metadataStr) {
     return false;
   }
 
+  const metadata: ApiKeyMetadata = JSON.parse(metadataStr);
   metadata.enabled = false;
-  await redisService.set(redisKey, metadata);
+  await redis.set(redisKey, JSON.stringify(metadata));
   return true;
 }
 
