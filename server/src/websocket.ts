@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { sessionService } from './services/sessionService.js';
 import { calculateDistance } from './utils/distance.js';
+import { validateApiKey } from './services/apiKeyService.js';
 import type { Role, WSMessage, WSResponse } from './types/index.js';
 
 interface Client {
@@ -24,6 +25,21 @@ export function setupWebSocket(server: Server) {
     const url = new URL(req.url!, `http://${req.headers.host}`);
     const code = url.searchParams.get('code');
     const role = url.searchParams.get('role') as Role | null;
+    const apiKey = url.searchParams.get('apiKey');
+
+    // Validate API key
+    if (!apiKey) {
+      ws.close(4001, 'Unauthorized: Missing API key');
+      return;
+    }
+
+    const keyMetadata = await validateApiKey(apiKey);
+    if (!keyMetadata) {
+      ws.close(4001, 'Unauthorized: Invalid or expired API key');
+      return;
+    }
+
+    console.log(`[WebSocket] Connection attempt from: ${keyMetadata.name} (${keyMetadata.type})`);
 
     // Validate connection params
     if (!code || !role || (role !== 'driver' && role !== 'passenger')) {

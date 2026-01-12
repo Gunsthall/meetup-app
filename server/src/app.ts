@@ -3,6 +3,7 @@ import cors from 'cors';
 import sessionsRouter from './routes/sessions.js';
 import healthRouter from './routes/health.js';
 import analyticsRouter from './routes/analytics.js';
+import { requireApiKey } from './middleware/apiKeyAuth.js';
 
 const app = express();
 
@@ -22,9 +23,9 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/v1/health', healthRouter);
-app.use('/v1/sessions', sessionsRouter);
-app.use('/v1/analytics', analyticsRouter);
+app.use('/v1/health', healthRouter); // Public - no auth required
+app.use('/v1/sessions', requireApiKey(), sessionsRouter); // Requires API key
+app.use('/v1/analytics', requireApiKey(['admin']), analyticsRouter); // Admin only
 
 // 404 handler
 app.use((req, res) => {

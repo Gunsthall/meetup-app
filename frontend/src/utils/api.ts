@@ -1,3 +1,5 @@
+import { getApiKey } from './auth';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export interface CreateSessionResponse {
@@ -27,6 +29,22 @@ export interface JoinSessionResponse {
 }
 
 /**
+ * Get authentication headers with API key
+ */
+function getAuthHeaders(): Record<string, string> {
+  const apiKey = getApiKey();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  return headers;
+}
+
+/**
  * API client for MeetUp backend
  */
 export const api = {
@@ -36,13 +54,14 @@ export const api = {
   async createSession(driverName: string): Promise<CreateSessionResponse> {
     const response = await fetch(`${API_URL}/v1/sessions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ driverName }),
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized: Invalid API key');
+      }
       throw new Error('Failed to create session');
     }
 
@@ -53,9 +72,14 @@ export const api = {
    * Get session information
    */
   async getSession(code: string): Promise<GetSessionResponse> {
-    const response = await fetch(`${API_URL}/v1/sessions/${code}`);
+    const response = await fetch(`${API_URL}/v1/sessions/${code}`, {
+      headers: getAuthHeaders(),
+    });
 
     if (!response.ok && response.status !== 404) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized: Invalid API key');
+      }
       throw new Error('Failed to get session');
     }
 
@@ -68,12 +92,13 @@ export const api = {
   async joinSession(code: string): Promise<JoinSessionResponse> {
     const response = await fetch(`${API_URL}/v1/sessions/${code}/join`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok && response.status !== 404 && response.status !== 410) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized: Invalid API key');
+      }
       throw new Error('Failed to join session');
     }
 
@@ -86,13 +111,14 @@ export const api = {
   async endSession(code: string, role: 'driver' | 'passenger'): Promise<void> {
     const response = await fetch(`${API_URL}/v1/sessions/${code}/end`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ role }),
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized: Invalid API key');
+      }
       throw new Error('Failed to end session');
     }
   },

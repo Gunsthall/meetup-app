@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { getApiKey } from '../utils/auth';
 import type { Role, WSMessage, WSResponse } from '../types';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
@@ -29,9 +30,17 @@ export function useWebSocket({ sessionCode, role, onMessage }: UseWebSocketOptio
     let isMounted = true;
 
     const connect = () => {
-      // Create WebSocket connection
-      const url = `${WS_URL}/ws?code=${sessionCode}&role=${role}`;
-      console.log('[WebSocket] Connecting to:', url);
+      // Get API key from session storage
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        console.error('[WebSocket] No API key found');
+        setError('Authentication required');
+        return;
+      }
+
+      // Create WebSocket connection with API key
+      const url = `${WS_URL}/ws?code=${sessionCode}&role=${role}&apiKey=${encodeURIComponent(apiKey)}`;
+      console.log('[WebSocket] Connecting to:', `${WS_URL}/ws?code=${sessionCode}&role=${role}&apiKey=***`);
       const socket = new WebSocket(url);
 
       socket.onopen = () => {
