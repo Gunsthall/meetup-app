@@ -4,7 +4,6 @@ import { isAuthenticated } from './utils/auth';
 import { Login } from './pages/Login';
 import { Home } from './pages/Home';
 import { Driver } from './pages/Driver';
-import { Passenger } from './pages/Passenger';
 import { Active } from './pages/Active';
 import { Beacon } from './pages/Beacon';
 import { JoinWithCode } from './pages/JoinWithCode';
